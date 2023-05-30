@@ -8,6 +8,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.brevinox.websitechecker.ui.theme.WebsiteCheckerTheme
@@ -74,10 +75,15 @@ fun InputBoxes() {
                 }
             },
             enabled = !isLoading,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(64.dp)
+                .padding(top = 8.dp)
         ) {
             if (isLoading) {
-                CircularProgressIndicator()
+                Box(Modifier.fillMaxSize()) {
+                    CircularProgressIndicator(Modifier.align(Alignment.Center))
+                }
             } else {
                 Text(text = "Check websites")
             }
