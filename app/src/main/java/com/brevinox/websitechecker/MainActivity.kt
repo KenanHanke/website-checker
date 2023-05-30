@@ -57,7 +57,7 @@ fun InputBoxes() {
             val label = if (boxResults.getOrNull(i) == true) {
                 "Website is up"
             } else if (boxResults.getOrNull(i) == false) {
-                "Website is down"
+                "Cannot reach this website"
             } else {
                 "New URL"
             }
