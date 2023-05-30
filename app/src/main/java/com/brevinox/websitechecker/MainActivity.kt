@@ -45,24 +45,6 @@ fun InputBoxes() {
             .padding(16.dp)
             .verticalScroll(scrollState)
     ) {
-        Button(
-            onClick = {
-                coroutineScope.launch {
-                    isLoading = true
-                    delay(3000) // simulating a background task
-                    isLoading = false
-                }
-            },
-            enabled = !isLoading,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            if (isLoading) {
-                CircularProgressIndicator()
-            } else {
-                Text(text = "Check websites")
-            }
-        }
-
         for (i in boxes.indices) {
             OutlinedTextField(
                 value = boxes[i],
@@ -81,6 +63,24 @@ fun InputBoxes() {
                     .fillMaxWidth()
                     .padding(bottom = 8.dp)
             )
+        }
+
+        Button(
+            onClick = {
+                coroutineScope.launch {
+                    isLoading = true
+                    delay(3000) // simulating a background task
+                    isLoading = false
+                }
+            },
+            enabled = !isLoading,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            if (isLoading) {
+                CircularProgressIndicator()
+            } else {
+                Text(text = "Check websites")
+            }
         }
     }
 }
