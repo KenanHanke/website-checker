@@ -15,6 +15,7 @@ import com.brevinox.websitechecker.ui.theme.WebsiteCheckerTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.awaitAll
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import androidx.compose.ui.tooling.preview.Preview
@@ -40,6 +41,7 @@ class MainActivity : ComponentActivity() {
 fun InputBoxes() {
     var boxes by remember { mutableStateOf(listOf("")) }
     var resultLabels by remember { mutableStateOf(listOf<String>()) }
+    var boxResults by remember { mutableStateOf(listOf<Boolean?>(null)) }
     val scrollState = rememberScrollState()
     var isLoading by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
@@ -52,16 +54,36 @@ fun InputBoxes() {
             .verticalScroll(scrollState)
     ) {
         for (i in boxes.indices) {
+            val label = if (boxResults.getOrNull(i) == true) {
+                "Website is up"
+            } else if (boxResults.getOrNull(i) == false) {
+                "Website is down"
+            } else {
+                "New URL"
+            }
+
+            val outlineColor = when (boxResults.getOrNull(i)) {
+                true -> MaterialTheme.colorScheme.primary
+                false -> MaterialTheme.colorScheme.error
+                else -> MaterialTheme.colorScheme.onBackground
+            }
+
             OutlinedTextField(
                 value = boxes[i],
-                label = { Text("New URL") },
+                label = { Text(label) },
+                colors = TextFieldDefaults.outlinedTextFieldColors(
+                    focusedBorderColor = outlineColor,
+                    unfocusedBorderColor = outlineColor
+                ),
                 onValueChange = { newValue ->
                     boxes = boxes.toMutableList().apply {
                         this[i] = newValue
                         if (this.last().isNotEmpty()) {
                             this.add("")
+                            boxResults = boxResults.toMutableList().apply { this.add(null) }
                         } else if (newValue.isEmpty() && this.size > 1 && i != this.lastIndex) {
                             this.removeAt(i)
+                            boxResults = boxResults.toMutableList().apply { this.removeAt(i) }
                         }
                     }
                 },
@@ -76,23 +98,28 @@ fun InputBoxes() {
                 coroutineScope.launch {
                     isLoading = true
                     val newResults = mutableListOf<String>()
+                    val newBoxResults = mutableListOf<Boolean?>()
 
-                    boxes.filter { it.isNotEmpty() }.map { url ->
+                    val deferredResults = boxes.filter { it.isNotEmpty() }.map { url ->
                         async(Dispatchers.IO) {
                             try {
                                 val request = Request.Builder().url(url).build()
                                 val response = client.newCall(request).execute()
                                 response.close()
-                                "$url is up"
+                                Pair(url, true)
                             } catch (e: Exception) {
-                                "$url is down"
+                                Pair(url, false)
                             }
                         }
-                    }.forEach { deferred ->
-                        newResults.add(deferred.await())
                     }
 
-                    resultLabels = newResults
+                    deferredResults.awaitAll().forEach { pair ->
+                        val (url, isUp) = pair
+                        newResults.add(if (isUp) "$url is up" else "$url is down")
+                        newBoxResults.add(isUp)
+                    }
+
+                    boxResults = newBoxResults
                     isLoading = false
                 }
             },
@@ -109,10 +136,6 @@ fun InputBoxes() {
             } else {
                 Text(text = "Check websites")
             }
-        }
-
-        resultLabels.forEach { label ->
-            Text(text = label)
         }
     }
 }
