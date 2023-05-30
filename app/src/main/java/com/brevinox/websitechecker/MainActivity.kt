@@ -12,8 +12,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.brevinox.websitechecker.ui.theme.WebsiteCheckerTheme
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import androidx.compose.ui.tooling.preview.Preview
 
 class MainActivity : ComponentActivity() {
@@ -36,10 +39,12 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun InputBoxes() {
     var boxes by remember { mutableStateOf(listOf("")) }
+    var resultLabels by remember { mutableStateOf(listOf<String>()) }
     val scrollState = rememberScrollState()
     var isLoading by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
+    val client = OkHttpClient()
 
     Column(
         modifier = Modifier
@@ -70,7 +75,24 @@ fun InputBoxes() {
             onClick = {
                 coroutineScope.launch {
                     isLoading = true
-                    delay(3000) // simulating a background task
+                    val newResults = mutableListOf<String>()
+
+                    boxes.filter { it.isNotEmpty() }.map { url ->
+                        async(Dispatchers.IO) {
+                            try {
+                                val request = Request.Builder().url(url).build()
+                                val response = client.newCall(request).execute()
+                                response.close()
+                                "$url is up"
+                            } catch (e: Exception) {
+                                "$url is down"
+                            }
+                        }
+                    }.forEach { deferred ->
+                        newResults.add(deferred.await())
+                    }
+
+                    resultLabels = newResults
                     isLoading = false
                 }
             },
@@ -87,6 +109,10 @@ fun InputBoxes() {
             } else {
                 Text(text = "Check websites")
             }
+        }
+
+        resultLabels.forEach { label ->
+            Text(text = label)
         }
     }
 }
