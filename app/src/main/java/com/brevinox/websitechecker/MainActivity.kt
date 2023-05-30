@@ -10,6 +10,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -47,6 +48,7 @@ fun InputBoxes() {
         for (i in boxes.indices) {
             OutlinedTextField(
                 value = boxes[i],
+                label = { Text("URL") },
                 onValueChange = { newValue ->
                     boxes = boxes.toMutableList().apply {
                         this[i] = newValue
