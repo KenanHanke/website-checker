@@ -48,7 +48,7 @@ fun InputBoxes() {
         for (i in boxes.indices) {
             OutlinedTextField(
                 value = boxes[i],
-                label = { Text("URL") },
+                label = { Text("New URL") },
                 onValueChange = { newValue ->
                     boxes = boxes.toMutableList().apply {
                         this[i] = newValue
