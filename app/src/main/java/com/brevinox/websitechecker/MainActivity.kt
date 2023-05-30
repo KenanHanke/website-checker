@@ -1,6 +1,7 @@
 package com.brevinox.websitechecker
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
@@ -40,7 +41,6 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun InputBoxes() {
     var boxes by remember { mutableStateOf(listOf("")) }
-    var resultLabels by remember { mutableStateOf(listOf<String>()) }
     var boxResults by remember { mutableStateOf(listOf<Boolean?>(null)) }
     val scrollState = rememberScrollState()
     var isLoading by remember { mutableStateOf(false) }
@@ -97,7 +97,6 @@ fun InputBoxes() {
             onClick = {
                 coroutineScope.launch {
                     isLoading = true
-                    val newResults = mutableListOf<String>()
                     val newBoxResults = mutableListOf<Boolean?>()
 
                     val deferredResults = boxes.filter { it.isNotEmpty() }.map { url ->
@@ -105,9 +104,14 @@ fun InputBoxes() {
                             try {
                                 val request = Request.Builder().url(url).build()
                                 val response = client.newCall(request).execute()
+
+                                // Check if the response was successful
+                                val isSuccessful = response.isSuccessful
                                 response.close()
-                                Pair(url, true)
+
+                                Pair(url, isSuccessful)
                             } catch (e: Exception) {
+                                Log.e("WebsiteChecker", "Error checking $url: ${e.message}", e)
                                 Pair(url, false)
                             }
                         }
@@ -115,7 +119,6 @@ fun InputBoxes() {
 
                     deferredResults.awaitAll().forEach { pair ->
                         val (url, isUp) = pair
-                        newResults.add(if (isUp) "$url is up" else "$url is down")
                         newBoxResults.add(isUp)
                     }
 
