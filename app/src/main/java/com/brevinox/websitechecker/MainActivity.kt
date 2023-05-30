@@ -11,7 +11,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.brevinox.websitechecker.ui.theme.WebsiteCheckerTheme
 
@@ -55,13 +54,5 @@ fun InputBoxes() {
                     .padding(bottom = 8.dp)
             )
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    WebsiteCheckerTheme {
-        InputBoxes()
     }
 }
