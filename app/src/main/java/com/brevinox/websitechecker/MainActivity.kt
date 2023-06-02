@@ -22,14 +22,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.awaitAll
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import androidx.compose.ui.tooling.preview.Preview
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             WebsiteCheckerTheme {
-                // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     color = MaterialTheme.colorScheme.background
@@ -113,7 +111,6 @@ fun InputBoxes() {
                                 val request = Request.Builder().url(url).build()
                                 val response = client.newCall(request).execute()
 
-                                // Check if the response was successful
                                 val isSuccessful = response.isSuccessful
                                 response.close()
 
@@ -149,13 +146,5 @@ fun InputBoxes() {
                 Text(text = "Check websites")
             }
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    WebsiteCheckerTheme {
-        InputBoxes()
     }
 }
