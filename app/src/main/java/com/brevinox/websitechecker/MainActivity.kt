@@ -1,9 +1,12 @@
 package com.brevinox.websitechecker
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.clickable
@@ -17,13 +20,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import androidx.work.*
 import com.brevinox.websitechecker.ui.theme.WebsiteCheckerTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,6 +48,22 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+
+        setupWorker()
+    }
+
+    private fun setupWorker() {
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+
+        val websiteCheckRequest =
+            PeriodicWorkRequestBuilder<WebsiteCheckWorker>(2, TimeUnit.HOURS)
+                .setConstraints(constraints)
+                .setInitialDelay(2, TimeUnit.HOURS)
+                .build()
+
+        WorkManager.getInstance(this).enqueue(websiteCheckRequest)
     }
 }
 
@@ -162,6 +185,82 @@ fun InputBoxes(sharedPreferences: SharedPreferences) {
             } else {
                 Text(text = "Check websites")
             }
+        }
+    }
+}
+
+class WebsiteCheckWorker(appContext: Context, workerParams: WorkerParameters) :
+    CoroutineWorker(appContext, workerParams) {
+
+    private val client = OkHttpClient()
+    private val sharedPreferences =
+        appContext.getSharedPreferences("website_checker", Context.MODE_PRIVATE)
+
+    override suspend fun doWork(): Result {
+        val boxes = sharedPreferences.getString("boxes", "")?.split(",")
+        val boxResults = sharedPreferences.getString("boxResults", "")?.split(",")?.toMutableList()
+        val unreachableWebsites = mutableListOf<String>()
+
+        boxes?.forEachIndexed { index, url ->
+            if (url.isEmpty()) {
+                return@forEachIndexed
+            }
+            try {
+                val request = Request.Builder().url(url).build()
+                val response = client.newCall(request).execute()
+
+                if (response.isSuccessful) {
+                    boxResults?.set(index, "true")
+                } else {
+                    unreachableWebsites.add(url)
+                    boxResults?.set(index, "false")
+                }
+
+                response.close()
+            } catch (e: Exception) {
+                unreachableWebsites.add(url)
+                boxResults?.set(index, "false")
+            }
+        }
+
+        if (unreachableWebsites.isNotEmpty()) {
+            sendNotification(unreachableWebsites)
+        }
+
+        sharedPreferences.edit().putString("boxResults", boxResults?.joinToString(",")).apply()
+
+        return Result.success()
+    }
+
+    private fun sendNotification(unreachableWebsites: List<String>) {
+        val channelId = "website_checker"
+        val notificationManager =
+            applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        val channel = NotificationChannel(
+            channelId,
+            "Website Checker",
+            NotificationManager.IMPORTANCE_HIGH
+        )
+        notificationManager.createNotificationChannel(channel)
+
+        val intent = Intent(applicationContext, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        val pendingIntent: PendingIntent = PendingIntent.getActivity(applicationContext, 0, intent, 0)
+
+        val title = if (unreachableWebsites.size > 1) "Websites unreachable" else "Website unreachable"
+
+        val builder = NotificationCompat.Builder(applicationContext, channelId)
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setContentTitle(title)
+            .setContentText(unreachableWebsites.joinToString(", "))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+
+        with(NotificationManagerCompat.from(applicationContext)) {
+            notify(0, builder.build())
         }
     }
 }
