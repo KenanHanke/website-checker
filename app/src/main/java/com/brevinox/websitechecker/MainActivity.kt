@@ -71,7 +71,12 @@ class MainActivity : ComponentActivity() {
                 .setInitialDelay(2, TimeUnit.HOURS)
                 .build()
 
-        WorkManager.getInstance(this).enqueue(websiteCheckRequest)
+        WorkManager.getInstance(this)
+            .enqueueUniquePeriodicWork(
+                "WebsiteCheck",
+                ExistingPeriodicWorkPolicy.UPDATE,
+                websiteCheckRequest
+            )
     }
 }
 
@@ -145,7 +150,7 @@ fun InputBoxes(sharedPreferences: SharedPreferences) {
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 8.dp)
+                    .padding(bottom = 10.dp)
             )
         }
 
@@ -188,8 +193,8 @@ fun InputBoxes(sharedPreferences: SharedPreferences) {
             enabled = !isLoading,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(64.dp)
-                .padding(top = 8.dp)
+                .height(76.dp)
+                .padding(top = 20.dp)
         ) {
             if (isLoading) {
                 Box(Modifier.fillMaxSize()) {
