@@ -11,9 +11,7 @@ permissions:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v3
     - name: set up JDK 11
@@ -27,3 +25,9 @@ jobs:
       run: chmod +x gradlew
     - name: Build with Gradle
       run: ./gradlew build
+      
+    - name: Upload APK
+      uses: actions/upload-artifact@v2
+      with:
+        name: app
+        path: app/build/outputs/apk/release/*.apk
