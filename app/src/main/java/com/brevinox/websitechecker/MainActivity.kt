@@ -19,6 +19,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -44,7 +45,14 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxWidth(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    InputBoxes(sharedPreferences)
+                    Column {
+                        CenterAlignedTopAppBar(
+                            title = {
+                                Text(text = "Website Checker")
+                            },
+                        )
+                        InputBoxes(sharedPreferences)
+                    }
                 }
             }
         }
@@ -96,10 +104,15 @@ fun InputBoxes(sharedPreferences: SharedPreferences) {
                 indication = null
             ) { focusManager.clearFocus() }
     ) {
+        Text(
+            text = "This app is intended to aid anyone who maintains websites. It can be used to check the status of websites manually and will also perform checks in the background every two hours.",
+            modifier = Modifier.padding(bottom = 24.dp)
+        )
+
         for (i in boxes.indices) {
             val label = when (boxResults.getOrNull(i)) {
                 true -> "Website is up"
-                false -> "Cannot reach this website"
+                false -> "Cannot reach website"
                 else -> "New URL"
             }
 
