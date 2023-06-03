@@ -1,5 +1,7 @@
 package com.brevinox.websitechecker
 
+import android.content.Context
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -26,13 +28,16 @@ import okhttp3.Request
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val sharedPreferences = getSharedPreferences("website_checker", Context.MODE_PRIVATE)
+
         setContent {
             WebsiteCheckerTheme {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    InputBoxes()
+                    InputBoxes(sharedPreferences)
                 }
             }
         }
@@ -40,9 +45,18 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun InputBoxes() {
-    var boxes by remember { mutableStateOf(listOf("")) }
-    var boxResults by remember { mutableStateOf(listOf<Boolean?>(null)) }
+fun InputBoxes(sharedPreferences: SharedPreferences) {
+    var boxes by remember {
+        mutableStateOf(
+            sharedPreferences.getString("boxes", "")?.split(",") ?: listOf("")
+        )
+    }
+    var boxResults by remember {
+        mutableStateOf(
+            sharedPreferences.getString("boxResults", "")?.split(",")?.map { it.toBooleanStrictOrNull() } ?: listOf()
+        )
+    }
+
     val scrollState = rememberScrollState()
     var isLoading by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
@@ -60,12 +74,10 @@ fun InputBoxes() {
             ) { focusManager.clearFocus() }
     ) {
         for (i in boxes.indices) {
-            val label = if (boxResults.getOrNull(i) == true) {
-                "Website is up"
-            } else if (boxResults.getOrNull(i) == false) {
-                "Cannot reach this website"
-            } else {
-                "New URL"
+            val label = when (boxResults.getOrNull(i)) {
+                true -> "Website is up"
+                false -> "Cannot reach this website"
+                else -> "New URL"
             }
 
             val outlineColor = when (boxResults.getOrNull(i)) {
@@ -92,6 +104,8 @@ fun InputBoxes() {
                             boxResults = boxResults.toMutableList().apply { this.removeAt(i) }
                         }
                     }
+                    sharedPreferences.edit().putString("boxes", boxes.joinToString(",")).apply()
+                    sharedPreferences.edit().putString("boxResults", boxResults.joinToString(",")).apply()
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -102,6 +116,8 @@ fun InputBoxes() {
         Button(
             onClick = {
                 coroutineScope.launch {
+                    // focusManager.clearFocus()
+
                     isLoading = true
                     val newBoxResults = mutableListOf<Boolean?>()
 
@@ -116,7 +132,6 @@ fun InputBoxes() {
 
                                 Pair(url, isSuccessful)
                             } catch (e: Exception) {
-                                Log.e("WebsiteChecker", "Error checking $url: ${e.message}", e)
                                 Pair(url, false)
                             }
                         }
@@ -129,7 +144,9 @@ fun InputBoxes() {
 
                     boxResults = newBoxResults
                     isLoading = false
-                    focusManager.clearFocus()
+
+                    sharedPreferences.edit().putString("boxes", boxes.joinToString(",")).apply()
+                    sharedPreferences.edit().putString("boxResults", boxResults.joinToString(",")).apply()
                 }
             },
             enabled = !isLoading,
