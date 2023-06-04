@@ -1,19 +1,25 @@
 # Website Checker
 
-This is a native Android app for website maintainers that checks if specified
-websites are down. This can be done manually within the app, but also automatically
-occurs in the background every two hours (as long as there's a network connection).
-A notification is sent if a website is found to be unreachable.
+Introducing a native Android app specifically designed for website maintainers! The
+app's key functionality involves checking the operational status of user specified
+websites. Manual checks are possible, but the app also performs these automatically
+in the background, every two hours, provided a network connection is available. In
+instances where a website is found to be unreachable, the app promptly sends out a
+notification.
 
-The app is written in [Kotlin](https://kotlinlang.org/) using
-[Jetpack Compose](https://developer.android.com/jetpack/compose) with themed widgets
-from Google's [Material 3](https://m3.material.io/) design language.
+This is my first project using [Kotlin](https://kotlinlang.org/), which was a
+nontrivial but rewarding experience. I used
+[Kotlin Coroutines](https://kotlinlang.org/docs/coroutines-overview.html) with
+[OkHttp](https://square.github.io/okhttp/) for asynchronous fetching of websites,
+and [Jetpack Compose](https://developer.android.com/jetpack/compose) with themed
+widgets from Google's [Material 3](https://m3.material.io/) design language for the
+UI.
 
 ## Screenshots
 
 ### App Icon
 
-<img src="https://github.com/KenanHanke/website-checker/assets/110426806/40562d32-264d-4797-bd5f-cb3b8cca7e1a" width=20%>
+<img src="https://github.com/KenanHanke/website-checker/assets/110426806/40562d32-264d-4797-bd5f-cb3b8cca7e1a" width=25%>
 
 ### User Interface
 
